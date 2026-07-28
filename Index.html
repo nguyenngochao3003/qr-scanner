@@ -1,1 +1,110 @@
 
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quét Mã QR Live Stream</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 20px 10px;
+    }
+    .card {
+      background: white;
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    #reader {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+    }
+    #status {
+      margin-top: 15px;
+      padding: 12px;
+      font-weight: bold;
+      border-radius: 6px;
+      display: none;
+    }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>🎥 Quét Mã QR Live</h2>
+    <p style="color: #666; font-size: 14px;">Đưa mã QR vào khung camera để quét</p>
+
+    <div id="reader"></div>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // ⚠️ DÁN LINK WEB APP GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY:
+    const GAS_WEB_APP_URL = "DÁN_LINK_EXEC_CỦA_BẠN_VÀO_ĐÂY";
+
+    let html5QrCode;
+    let isProcessing = false;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      html5QrCode = new Html5Qrcode("reader");
+
+      const config = { 
+        fps: 10, 
+        qrbox: { width: 220, height: 220 } 
+      };
+
+      // Tự động bật camera sau (Zalo style)
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        config, 
+        onScanSuccess
+      ).catch(err => {
+        showStatus("✕ Không thể mở Camera: " + err, "error");
+      });
+    });
+
+    function onScanSuccess(decodedText) {
+      if (isProcessing) return;
+      isProcessing = true;
+
+      showStatus("⏳ Đang lưu mã: " + decodedText, "success");
+
+      // Gửi dữ liệu về Google Apps Script
+      fetch(GAS_WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors", // Bypass CORS restrictions
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: decodedText })
+      })
+      .then(() => {
+        showStatus("✓ Đã quét & lưu thành công: " + decodedText, "success");
+        // Cho phép quét mã tiếp theo sau 3 giây
+        setTimeout(() => { isProcessing = false; }, 3000);
+      })
+      .catch(err => {
+        showStatus("✕ Lỗi gửi dữ liệu: " + err, "error");
+        setTimeout(() => { isProcessing = false; }, 3000);
+      });
+    }
+
+    function showStatus(msg, className) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.innerText = msg;
+      statusDiv.className = className;
+      statusDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
