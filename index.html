@@ -49,6 +49,7 @@
     <div id="reader"></div>
     <div id="status"></div>
   </div>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <script>
     // ⚠️ DÁN LINK WEB APP GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY:
@@ -76,11 +77,21 @@
     });
 
     // Sau khi quét thành công trong GitHub:
-    function onScanSuccess(qrCodeMessage) {
-      // Thay URL_WEB_APP bằng URL .exec của bạn
-      var webAppUrl = "https://script.google.com/macros/s/YOUR_EXEC_ID/exec";
-      window.location.href = webAppUrl + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
+   function onScanSuccess(qrCodeMessage) {
+    if (isProcessing) return; // Nếu đang xử lý thì bỏ qua các lần quét tiếp theo
+    isProcessing = true;
+
+    // Tắt camera ngay sau khi quét thành công để giải phóng tài nguyên
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            window.location.href = GAS_WEB_APP_URL + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
+        }).catch(() => {
+            window.location.href = GAS_WEB_APP_URL + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
+        });
+    } else {
+        window.location.href = GAS_WEB_APP_URL + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
     }
+}
 
     function showStatus(msg, className) {
       const statusDiv = document.getElementById('status');
