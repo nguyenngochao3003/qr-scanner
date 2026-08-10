@@ -75,28 +75,11 @@
       });
     });
 
-    function onScanSuccess(decodedText) {
-      if (isProcessing) return;
-      isProcessing = true;
-
-      showStatus("⏳ Đang lưu mã: " + decodedText, "success");
-
-      // Gửi dữ liệu về Google Apps Script
-      fetch(GAS_WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors", // Bypass CORS restrictions
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: decodedText })
-      })
-      .then(() => {
-        showStatus("✓ Đã quét & lưu thành công: " + decodedText, "success");
-        // Cho phép quét mã tiếp theo sau 3 giây
-        setTimeout(() => { isProcessing = false; }, 3000);
-      })
-      .catch(err => {
-        showStatus("✕ Lỗi gửi dữ liệu: " + err, "error");
-        setTimeout(() => { isProcessing = false; }, 3000);
-      });
+    // Sau khi quét thành công trong GitHub:
+    function onScanSuccess(qrCodeMessage) {
+      // Thay URL_WEB_APP bằng URL .exec của bạn
+      var webAppUrl = "https://script.google.com/macros/s/YOUR_EXEC_ID/exec";
+      window.location.href = webAppUrl + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
     }
 
     function showStatus(msg, className) {
