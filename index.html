@@ -50,54 +50,57 @@
     <div id="status"></div>
   </div>
 
-  <script>
-    // ⚠️ DÁN LINK WEB APP GOOGLE APPS SCRIPT CỦA BẠN VÀO ĐÂY:
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby34I0VMiVzaCG4pK3c2v4PWRAN6m7AIpbyqJ2NPGOKrwziTexeMmR8uA_JTNDnj3HW/exec";
+<script>
+  // ⚠️ LINK WEB APP GOOGLE APPS SCRIPT CỦA BẠN:
+  const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby34I0VMiVzaCG4pK3c2v4PWRAN6m7AIpbyqJ2NPGOKrwziTexeMmR8uA_JTNDnj3HW/exec";
+  let html5QrCode;
+  let isProcessing = false;
 
-    let html5QrCode;
-    let isProcessing = false;
+  window.addEventListener('DOMContentLoaded', () => {
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 10, qrbox: { width: 220, height: 220 } };
 
-    window.addEventListener('DOMContentLoaded', () => {
-      html5QrCode = new Html5Qrcode("reader");
-
-      const config = { 
-        fps: 10, 
-        qrbox: { width: 220, height: 220 } 
-      };
-
-      // Tự động bật camera sau (Zalo style)
-      html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        onScanSuccess
-      ).catch(err => {
-        showStatus("✕ Không thể mở Camera: " + err, "error");
-      });
+    // Bật camera
+    html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      onScanSuccess
+    ).catch(err => {
+      showStatus("✕ Không thể mở Camera: " + err, "error");
     });
+  });
 
-    // Sau khi quét thành công trong GitHub:
-   function onScanSuccess(qrCodeMessage) {
-    if (isProcessing) return; // Nếu đang xử lý thì bỏ qua các lần quét tiếp theo
+  // Xử lý khi quét thành công
+  async function onScanSuccess(qrCodeMessage) {
+    if (isProcessing) return; // Tránh quét lặp liên tục
     isProcessing = true;
 
-    // Tắt camera ngay sau khi quét thành công để giải phóng tài nguyên
+    // 1. Tắt camera ngay lập tức
     if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            window.location.href = GAS_WEB_APP_URL + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
-        }).catch(() => {
-            window.location.href = GAS_WEB_APP_URL + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
-        });
-    } else {
-        window.location.href = GAS_WEB_APP_URL + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
+      try {
+        await html5QrCode.stop();
+      } catch (err) {
+        console.error("Lỗi khi dừng camera:", err);
+      }
     }
-}
 
-    function showStatus(msg, className) {
-      const statusDiv = document.getElementById('status');
-      statusDiv.innerText = msg;
-      statusDiv.className = className;
-      statusDiv.style.display = 'block';
-    }
-  </script>
+    // 2. Ẩn khung camera và hiển thị kết quả quét được lên màn hình
+    document.getElementById('reader').style.display = 'none';
+    showStatus(`✓ Đã quét thành công!\n Mã QR: ${qrCodeMessage}\nĐang chuyển tiếp dữ liệu...`, "success");
+
+    // 3. Chờ 1 giây rồi truyền dữ liệu qua Google Apps Script
+    setTimeout(() => {
+      const redirectUrl = GAS_WEB_APP_URL + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
+      window.location.href = redirectUrl;
+    }, 1000);
+  }
+
+  function showStatus(msg, className) {
+    const statusDiv = document.getElementById('status');
+    statusDiv.innerText = msg;
+    statusDiv.className = className;
+    statusDiv.style.display = 'block';
+  }
+</script>
 </body>
 </html>
