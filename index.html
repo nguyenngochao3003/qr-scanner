@@ -71,29 +71,50 @@
   });
 
   // Xử lý khi quét thành công
-  async function onScanSuccess(qrCodeMessage) {
-    if (isProcessing) return; // Tránh quét lặp liên tục
-    isProcessing = true;
+async function onScanSuccess(qrCodeMessage) {
+  if (isProcessing) return;
 
-    // 1. Tắt camera ngay lập tức
-    if (html5QrCode) {
-      try {
-        await html5QrCode.stop();
-      } catch (err) {
-        console.error("Lỗi khi dừng camera:", err);
-      }
+  isProcessing = true;
+
+  // 1. Dừng camera
+  if (html5QrCode) {
+    try {
+      await html5QrCode.stop();
+    } catch (err) {
+      console.error("Lỗi khi dừng camera:", err);
     }
-
-    // 2. Ẩn khung camera và hiển thị kết quả quét được lên màn hình
-    document.getElementById('reader').style.display = 'none';
-    showStatus(`✓ Đã quét thành công!\n Mã QR: ${qrCodeMessage}\nĐang chuyển tiếp dữ liệu...`, "success");
-
-    // 3. Chờ 1 giây rồi truyền dữ liệu qua Google Apps Script
-    setTimeout(() => {
-      const redirectUrl = GAS_WEB_APP_URL + "?page=scan&code=" + encodeURIComponent(qrCodeMessage);
-      window.location.href = redirectUrl;
-    }, 1000);
   }
+
+  // 2. Ẩn camera
+  document.getElementById("reader").style.display = "none";
+
+  showStatus(
+    "✓ Đã quét thành công!\nMã QR: " + qrCodeMessage,
+    "success"
+  );
+
+  // 3. Gửi dữ liệu QR về cửa sổ Apps Script đã mở scanner
+  if (window.opener) {
+
+    window.opener.postMessage(
+      {
+        type: "QR_SCANNED",
+        code: qrCodeMessage
+      },
+      "*"
+    );
+
+  } else {
+
+    console.error("Không tìm thấy cửa sổ Apps Script.");
+
+  }
+
+  // 4. Đóng cửa sổ scanner sau 1 giây
+  setTimeout(() => {
+    window.close();
+  }, 1000);
+}
 
   function showStatus(msg, className) {
     const statusDiv = document.getElementById('status');
