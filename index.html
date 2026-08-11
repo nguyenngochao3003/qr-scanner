@@ -98,7 +98,10 @@ async function onScanSuccess(qrCodeMessage) {
     window.opener.postMessage(
       {
         type: "QR_SCANNED",
-        code: qrCodeMessage
+        code: qrCodeMessage,
+        scanner: "hao",
+        timestamp: Date.now(),
+        location: "shell 1"
       },
       "*"
     );
