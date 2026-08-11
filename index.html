@@ -100,7 +100,7 @@ async function onScanSuccess(qrCodeMessage) {
         type: "QR_SCANNED",
         code: qrCodeMessage,
         scanner: "hao",
-        timestamp: new Date().toLocaleString(),
+        timestamp: Date.now(),
         location: "shell 1"
       },
       "*"
